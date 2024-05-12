@@ -1,0 +1,13 @@
+apiVersion: v1                               # Specifies the Kubernetes API version.
+kind: ConfigMap                                # Defines the type of Kubernetes resource in this case it is ConfigMap
+metadata: 
+  name: mongodb-config                         # this line sets the name of the ConfigMap resource.
+immutable: false                                 # Indicates whether the ConfigMap is mutable
+data:                                             
+  username: admin1                              # Stores the username "admin1".
+  mongodb.conf: |                                # Defines a ConfigMap "mongodb-config" with MongoDB configuration for storage and replication, including dbPath and replSetName. 
+    storage:                                      
+      dbPath: /data/db
+    replication:
+        replSetName: "rs0"
+        

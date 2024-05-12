@@ -1,0 +1,87 @@
+apiVersion: apps/v1                                # Specifies the Kubernetes API version for StatefulSet.
+kind: StatefulSet                                   # Defines the type of Kubernetes resource (StatefulSet).
+metadata:
+  name: mongo                                     # Sets the name of the StatefulSet resource.
+spec:
+  selector:
+    matchLabels:
+      app: mongo                                    # Selects pods with the label app: mongo.
+  serviceName: "mongo"                               # Sets the service name for the StatefulSet.
+  replicas: 3                                          # Sets the desired number of replicas for the StatefulSet.
+  template:
+    metadata:
+      labels:
+        app: mongo                                         # Labels the pods created by this StatefulSet as app: mongo.
+    spec:
+      containers:
+        - name: mongo                                        # Names the container as mongo.
+          image: mongo:4.0.8                                    # Specifies the Docker image for the container.
+          startupProbe:                                       # Defines the startup probe for the container.
+            exec:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"                          # Executes a ping command during startup.
+            initialDelaySeconds: 1                                      # Sets the initial delay for the probe.
+            periodSeconds: 10                                         # Sets the period between probe checks.
+            timeoutSeconds: 5                                         # Sets the timeout for probe execution.
+            successThreshold: 1                                      # Sets the number of successes needed for the probe to be considered successful.
+            failureThreshold: 2                                        # Sets the number of failures allowed before the probe is considered failed.
+          livenessProbe:                                              # Defines the liveness probe for the container.
+            exec:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"                                 # Executes a ping command to check liveness
+            initialDelaySeconds: 1                                           # this line sets the initial delay for the probe
+            periodSeconds: 10                                               # this line sets the period between probe checks
+            timeoutSeconds: 5                                               # this line sets the timeout for probe execution
+            successThreshold: 1                                            # this line sets the number of successes needed for the probe to be considered successful.
+            failureThreshold: 2                                              # this line sets the number of failures allowed before the probe is considered failed.
+          readinessProbe:                                                    # Defines the readiness probe for the container.
+            exec:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"                      # Executes a ping command to check readiness.
+            initialDelaySeconds: 1                               # Sets the initial delay for the probe.
+            periodSeconds: 10                                    # Sets the period between probe checks.
+            timeoutSeconds: 5                                    # Sets the timeout for probe execution.
+            successThreshold: 1                                   # Sets the number of successes needed for the probe to be considered successful.
+            failureThreshold: 2                                   # Sets the number of failures allowed before the probe is considered failed.
+          env:                                                     # Defines environment variables for the container.
+            - name: MONGO_INITDB_ROOT_USERNAME                     # Sets the MongoDB root username.
+              valueFrom:                                            
+                configMapKeyRef:                                    # Retrieves the value from a ConfigMap key.
+                  key: username                                      # Specifies the key in the ConfigMap.
+                  name: mongodb-config                               # Specifies the name of the ConfigMap.
+            - name: MONGO_INITDB_ROOT_PASSWORD                        # Sets the MongoDB root password.
+              valueFrom:            
+                secretKeyRef:                                          # Retrieves the value from a Secret key.
+                  key: password                                         # Specifies the key in the Secret containing the MongoDB root password.
+                  name: mongodb-secret                                    # Specifies the name of the Secret.
+          command:                                                        # Overrides the default command for the container.
+            - mongod                                                         # Specifies the MongoDB daemon command.
+            - "--bind_ip_all"                                                 # Binds MongoDB to all available IP addresses.
+            - --config=/etc/mongo/mongodb.conf                                 # Specifies the MongoDB configuration file.
+          volumeMounts:                                                        # Mounts volumes into the container.
+            - name: mongo-volume                                               # Specifies the name of the volume.
+              mountPath: /data/db                                                # Mounts the volume to the MongoDB data directory.
+            - name: mongodb-config                                                 # Specifies the name of another volume.
+              mountPath: /etc/mongo                                            # Mounts the volume to the MongoDB configuration directory.
+      volumes:                                                               # Defines volumes for the StatefulSet pods.
+        - name: mongodb-config                                             # Specifies the name of the volume.
+          configMap:                                                       # Uses a ConfigMap as the volume source.
+            name: mongodb-config                                             # Specifies the name of the ConfigMap.
+            items:                                                          # Specifies individual items from the ConfigMap.
+              - key: mongodb.conf                                            # Specifies the key in the ConfigMap.
+                path: mongodb.conf                                            # Specifies the path to mount the item in the container.
+  volumeClaimTemplates:                                                        # Defines volume claim templates for persistent storage.
+    - metadata:
+        name: mongo-volume                                                      # Specifies the name of the volume claim template.
+      spec:
+        accessModes: ["ReadWriteOnce"]                                          # Sets the access mode for the volume claim.
+        storageClassName: demo-storage                                          # Specifies the storage class for the volume.
+        resources:
+          requests:
+            storage: 1Gi                                                        # Requests 1 gigabyte of storage for the volume claim.

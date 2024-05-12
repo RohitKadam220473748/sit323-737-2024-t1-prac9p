@@ -1,0 +1,12 @@
+apiVersion: v1                                           # Specifies the Kubernetes API version for Service.
+kind: Service                                              # Defines the type of Kubernetes resource i.e. Service.
+metadata:                                                
+  name: mongo                                               # Sets the name of the Service resource.
+spec:
+  ports:
+    - name: mongo                                            # Names the port as "mongo".
+      port: 27017                                               # Specifies the port number.
+      targetPort: 27017                                        # Specifies the target port number.
+  clusterIP: None                                              # Specifies the cluster IP as "None" (headless Service)
+  selector:                                                    
+    app: mongo                                                   # Selects pods with the label app: mongo
